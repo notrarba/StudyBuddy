@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StudyBuddy</title>
+<style>
+:root{
+  --bg1:#0f0c29;--bg2:#302b63;--bg3:#24243e;
+  --glass:rgba(255,255,255,.07);--line:rgba(255,255,255,.14);
+  --text:#eef0ff;--muted:#a9adcc;--accent:#7c5cff;--accent2:#22d3ee;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;flex-direction:column;color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:20px;background:linear-gradient(90deg,var(--accent2),var(--accent));-webkit-background-clip:text;color:transparent}
+.badge{font-size:12px;color:var(--muted);background:var(--glass);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+.toolbar{display:flex;flex-wrap:wrap;gap:14px;padding:12px 24px;border-bottom:1px solid var(--line)}
+.group{display:flex;flex-direction:column;gap:6px}
+.group label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;gap:4px;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:3px;flex-wrap:wrap}
+button,select{font:inherit;color:var(--text)}
+.seg button,.chip{background:transparent;border:1px solid transparent;border-radius:9px;padding:6px 12px;cursor:pointer;font-size:13px;transition:.2s}
+.seg button.on,.chip.on{background:linear-gradient(135deg,var(--accent),#4f46e5);box-shadow:0 4px 14px rgba(124,92,255,.35)}
+.chip{border-color:var(--line);background:var(--glass)}
+.chip:hover,.seg button:hover{filter:brightness(1.2)}
+select{background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+select option{background:#1d1b3a}
+#chat{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:78%;padding:12px 16px;border-radius:16px;line-height:1.6;font-size:15px;animation:up .3s ease;word-wrap:break-word}
+.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),#4f46e5);border-bottom-right-radius:4px}
+.bot{align-self:flex-start;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px);border-bottom-left-radius:4px}
+.bot code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px}
+.welcome{margin:auto;text-align:center;max-width:560px}
+.welcome h2{font-size:28px;margin:0 0 8px}
+.welcome p{color:var(--muted);margin:0 0 18px}
+.suggest{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.dots span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--accent2);animation:b 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+footer{padding:14px 24px;border-top:1px solid var(--line)}
+.docbar{max-width:900px;margin:0 auto 10px;display:flex}
+.doc-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.4);
+  padding:5px 8px 5px 12px;border-radius:99px;font-size:13px}
+.doc-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+.row{display:flex;gap:10px;max-width:900px;margin:0 auto}
+textarea{flex:1;resize:none;height:52px;max-height:160px;border-radius:14px;border:1px solid var(--line);background:var(--glass);color:var(--text);padding:14px 16px;font:inherit;outline:none}
+textarea:focus{border-color:var(--accent2)}
+.attach{width:52px;border-radius:14px;border:1px solid var(--line);background:var(--glass);cursor:pointer;font-size:18px}
+.attach:hover{filter:brightness(1.2)}
+.send{padding:0 22px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--accent2),var(--accent));font-weight:700;cursor:pointer}
+.send:disabled,.attach:disabled{opacity:.5;cursor:not-allowed}
+.hint{text-align:center;font-size:12px;color:var(--muted);margin-top:8px}
+.clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes b{0%,100%{opacity:.3}50%{opacity:1}}
+@media(max-width:640px){.msg{max-width:92%}header{padding:12px 16px}.toolbar{padding:12px 16px}footer{padding:12px 16px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">StudyBuddy ✦</div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span class="badge" id="model">connecting…</span>
+    <button class="clear" id="clear">Clear chat</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="group">
+    <label>Prompting</label>
+    <div class="seg" id="technique">
+      <button data-v="zero_shot" class="on">Zero-shot</button>
+      <button data-v="few_shot">Few-shot</button>
+      <button data-v="role">Role</button>
+    </div>
+  </div>
+  <div class="group" id="roleGroup" style="display:none">
+    <label>Role</label>
+    <select id="role">
+      <option value="general">All-subject tutor</option>
+      <option value="math">Math teacher</option>
+      <option value="science">Science teacher</option>
+      <option value="coding">Programming mentor</option>
+      <option value="exam">Exam coach</option>
+    </select>
+  </div>
+  <div class="group">
+    <label>Level</label>
+    <select id="level">
+      <option value="kid">Kid (10 yrs)</option>
+      <option value="teen" selected>High school</option>
+      <option value="college">College</option>
+    </select>
+  </div>
+  <div class="group">
+    <label>Extras</label>
+    <div class="seg" id="extras">
+      <button class="chip" data-v="step_by_step">Step-by-step</button>
+      <button class="chip" data-v="socratic">Socratic</button>
+      <button class="chip" data-v="mnemonic">Memory trick</button>
+      <button class="chip" data-v="flashcards">Flashcards</button>
+      <button class="chip" data-v="quiz">Quiz me</button>
+      <button class="chip" data-v="summary">Summary first</button>
+    </div>
+  </div>
+</div>
+
+<div id="chat">
+  <div class="welcome" id="welcome">
+    <h2>What do you want to understand today?</h2>
+    <p>Ask me anything, from homework to everyday curiosity. Or attach a file and ask questions about it. I'll explain it in simple words so it sticks.</p>
+    <div class="suggest">
+      <button class="chip" data-q="Why is the sky blue?">Why is the sky blue?</button>
+      <button class="chip" data-q="What is a fraction?">What is a fraction?</button>
+      <button class="chip" data-q="How does the internet work?">How does the internet work?</button>
+      <button class="chip" data-q="If all cats are animals and some animals fly, can a cat fly?">Logic puzzle</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="docbar" id="docbar" hidden>
+    <span class="doc-chip">📄 <span id="docName"></span> <button id="docRemove" title="Remove file">×</button></span>
+  </div>
+  <div class="row">
+    <button class="attach" id="attach" title="Attach a file (PDF, Word, TXT, MD, CSV)">📎</button>
+    <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv" hidden>
+    <textarea id="input" placeholder="Ask anything… (Enter to send, Shift+Enter for a new line)"></textarea>
+    <button class="send" id="send">Send</button>
+  </div>
+  <div class="hint">Max file size 10 MB. Scanned PDFs (images only) are not supported yet.</div>
+</footer>
+
+<script>
+const state = {
+  technique: "zero_shot", role: "general", level: "teen",
+  extras: new Set(), history: [], busy: false,
+  docId: null, docName: null,
+};
+const $ = (s) => document.querySelector(s);
+const chat = $("#chat"), input = $("#input"), sendBtn = $("#send"), attachBtn = $("#attach");
+
+// Safe minimal markdown: escape HTML first, then format.
+function render(text) {
+  const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return esc
+    .replace(/^#{1,3} (.+)$/gm, "<b>$1</b>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/(^|\s)\*([^*\n]+)\*/g, "$1<i>$2</i>")
+    .replace(/^- /gm, "• ")
+    .replace(/\n/g, "<br>");
+}
+
+function addMsg(role, text) {
+  $("#welcome")?.remove();
+  const div = document.createElement("div");
+  div.className = "msg " + (role === "user" ? "user" : "bot");
+  div.innerHTML = render(text);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function typing() {
+  const d = document.createElement("div");
+  d.className = "msg bot dots";
+  d.innerHTML = "<span></span><span></span><span></span>";
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+
+async function ask(question) {
+  if (!question.trim() || state.busy) return;
+  state.busy = true; sendBtn.disabled = true; attachBtn.disabled = true;
+  addMsg("user", question);
+  const wait = typing();
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: question,
+        history: state.history,
+        technique: state.technique,
+        role: state.role,
+        level: state.level,
+        extras: [...state.extras],
+        doc_id: state.docId,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Request failed");
+    wait.remove();
+    addMsg("bot", data.reply);
+    state.history.push({ role: "user", content: question }, { role: "assistant", content: data.reply });
+  } catch (e) {
+    wait.remove();
+    addMsg("bot", "Sorry, something went wrong: " + e.message);
+  } finally {
+    state.busy = false; sendBtn.disabled = false; attachBtn.disabled = false; input.focus();
+  }
+}
+
+// Prompting controls
+$("#technique").addEventListener("click", (e) => {
+  if (!e.target.dataset.v) return;
+  state.technique = e.target.dataset.v;
+  document.querySelectorAll("#technique button").forEach(b => b.classList.toggle("on", b === e.target));
+  $("#roleGroup").style.display = state.technique === "role" ? "flex" : "none";
+});
+$("#role").addEventListener("change", e => state.role = e.target.value);
+$("#level").addEventListener("change", e => state.level = e.target.value);
+$("#extras").addEventListener("click", (e) => {
+  const v = e.target.dataset.v; if (!v) return;
+  state.extras.has(v) ? state.extras.delete(v) : state.extras.add(v);
+  e.target.classList.toggle("on");
+});
+
+// File upload
+attachBtn.addEventListener("click", () => $("#file").click());
+$("#file").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+
+  const fd = new FormData();
+  fd.append("file", f);
+  attachBtn.disabled = true; sendBtn.disabled = true;
+  const wait = typing();
+  try {
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Upload failed");
+    wait.remove();
+    state.docId = data.doc_id;
+    state.docName = data.name;
+    $("#docName").textContent = data.name + (data.truncated ? " (first part only)" : "");
+    $("#docbar").hidden = false;
+    input.placeholder = "Ask a question about your file…";
+    addMsg("bot", `Got it. I've read **${data.name}**. Ask me anything about it.`);
+  } catch (err) {
+    wait.remove();
+    addMsg("bot", "I couldn't use that file: " + err.message);
+  } finally {
+    attachBtn.disabled = false; sendBtn.disabled = false;
+  }
+});
+
+$("#docRemove").addEventListener("click", () => {
+  state.docId = null; state.docName = null;
+  $("#docbar").hidden = true;
+  input.placeholder = "Ask anything… (Enter to send, Shift+Enter for a new line)";
+});
+
+// Input
+sendBtn.addEventListener("click", () => { const q = input.value; input.value = ""; ask(q); });
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+});
+document.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => ask(b.dataset.q)));
+$("#clear").addEventListener("click", () => location.reload());
+
+// Show which model is running
+fetch("/api/config").then(r => r.json()).then(c => $("#model").textContent = c.model).catch(() => {});
+</script>
+</body>
+</html>
