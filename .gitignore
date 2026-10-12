@@ -1,0 +1,27 @@
+# Ignore everything by default
+*
+
+# But allow directories to be traversed
+!*/
+
+# Un-ignore the stuff you actually want tracked
+!backend/**/*.py
+!frontend/**/*.js
+!frontend/**/*.ts
+!frontend/**/*.tsx
+!frontend/**/*.jsx
+!frontend/**/*.json
+!**/*.md
+!.gitignore
+!LICENSE
+
+# Re-ignore things even inside allowed folders
+.env
+.env.*
+*.key
+*.pem
+node_modules/
+__pycache__/
+venv/
+*.pyc
+.DS_Store
